@@ -29,10 +29,7 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: |
-        npm ci
-        # Ensure import plugin is installed for enhanced checks
-        npm list eslint-plugin-import || npm install --save-dev eslint-plugin-import eslint-import-resolver-typescript
+      run: npm ci
     
     - name: TypeScript Check
       run: npx tsc --noEmit
