@@ -2,7 +2,7 @@ name: Validate and Auto-Merge
 
 on:
   push:
-    branches: [ test-main ]
+    branches: [ pre-build-check ]
   pull_request:
     branches: [ main ]
 
@@ -29,7 +29,10 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm ci
+      run: |
+        npm ci
+        # Ensure import plugin is installed for enhanced checks
+        npm list eslint-plugin-import || npm install --save-dev eslint-plugin-import eslint-import-resolver-typescript
     
     - name: TypeScript Check
       run: npx tsc --noEmit
@@ -44,6 +47,37 @@ jobs:
         # --quiet = only show errors
         # --fix = auto-fix what's possible
         # --max-warnings 999 = ignore warnings
+    
+    - name: Import Order and Unused Imports Check
+      run: |
+        echo "### 🔍 Import Analysis" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Check for unused imports (TypeScript will catch this)
+        echo "TypeScript compiler checks for unused imports automatically." >> $GITHUB_STEP_SUMMARY
+        
+        # Check for relative imports that should use aliases
+        RELATIVE_IMPORTS=$(find src -name "*.ts" -o -name "*.tsx" | xargs grep -l "from ['\"]\.\./" | wc -l || echo "0")
+        if [ "$RELATIVE_IMPORTS" -gt 0 ]; then
+          echo "⚠️ **Found $RELATIVE_IMPORTS files with relative imports (../)**" >> $GITHUB_STEP_SUMMARY
+          echo "Consider using @/ aliases instead." >> $GITHUB_STEP_SUMMARY
+          
+          # Show examples
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details>" >> $GITHUB_STEP_SUMMARY
+          echo "<summary>Files with relative imports:</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          find src -name "*.ts" -o -name "*.tsx" | xargs grep -l "from ['\"]\.\./" | head -10 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ All imports use proper @/ aliases" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Check for circular dependencies (basic check)
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "ℹ️ For circular dependency detection, consider adding 'madge' or 'circular-dependency-plugin'" >> $GITHUB_STEP_SUMMARY
     
     - name: Dependency Version Check
       run: |
@@ -84,7 +118,7 @@ jobs:
   auto-merge:
     needs: validate-and-fix
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/test-main' && success()
+    if: github.event_name == 'push' && github.ref == 'refs/heads/pre-build-check' && success()
     
     steps:
     - name: Checkout code
@@ -98,16 +132,16 @@ jobs:
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
     
-    - name: Merge test-main to main
+    - name: Merge pre-build-check to main
       run: |
         git checkout main
-        git merge test-main --no-ff -m "chore: Auto-merge from test-main
+        git merge pre-build-check --no-ff -m "chore: Auto-merge from pre-build-check
         
         All validation checks passed"
         git push origin main
     
-    - name: Update test-main
+    - name: Update pre-build-check
       run: |
-        git checkout test-main
+        git checkout pre-build-check
         git merge main
-        git push origin test-main
+        git push origin pre-build-check
