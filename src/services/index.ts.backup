@@ -7,14 +7,13 @@ import { IStorageService } from './interfaces/IStorageService';
 import { IDatabaseService } from './interfaces/IDatabaseService';
 
 // Import mock implementations by default
-import { SupabaseAuthService } from './implementations/supabase/SupabaseAuthService';
+import { MockAuthService } from './implementations/mock/MockAuthService';
 import { MockStorageService } from './implementations/mock/MockStorageService';
 import { MockDatabaseService } from './implementations/mock/MockDatabaseService';
 
 // BACKEND_INJECTION_START
-// Injected by setup-apex-backend.sh
 // These lines will be replaced by setup-apex-backend.sh when configuring real backend
-export const authService: IAuthService = new SupabaseAuthService();
+export const authService: IAuthService = new MockAuthService();
 export const storageService: IStorageService = new MockStorageService();
 export const databaseService: IDatabaseService = new MockDatabaseService();
 // BACKEND_INJECTION_END
