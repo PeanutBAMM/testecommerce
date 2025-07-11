@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export class MockDatabaseService implements IDatabaseService {
   private mockData: Map<string, Map<string, any>> = new Map();
-  private subscriptions: Map<string, Set<Function>> = new Map();
+  private subscriptions: Map<string, Set<(data: any) => void>> = new Map();
   
   constructor() {
     // Initialize with some mock data
