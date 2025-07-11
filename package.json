@@ -22,7 +22,9 @@
     "build:android": "eas build --platform android",
     "build:ios": "eas build --platform ios",
     "db:setup": "tsx scripts/setup-supabase-db.ts",
-    "db:test": "tsx scripts/test-supabase-connection.ts"
+    "db:test": "tsx scripts/test-supabase-connection.ts",
+    "setup:hooks": "bash ./scripts/setup-git-hooks.sh",
+    "postinstall": "npm run setup:hooks 2>/dev/null || true"
   },
   "dependencies": {
     "@expo/vector-icons": "14.0.4",
